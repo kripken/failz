@@ -1,0 +1,36 @@
+\title{Failz -- Failing Fast}
+\author{
+        ... \\
+        ... \\
+            \and
+        ... \\
+        ... \\
+}
+%\date{\today}
+
+\documentclass[12pt]{article}
+
+\begin{document}
+\maketitle
+
+%\begin{abstract}
+%This is the paper's abstract \ldots
+%\end{abstract}
+
+\section{Introduction}
+Given a test suite for a software project, we may want to detect failures in the suit early. For example, we may cancel the entire test run on a single failure (and ask the submitter to fix it before resubmitting), or, we may want to see errors early so we can start to work on them, even if we do let the tests run to completion.
+
+If we record test failures over time, we can estimate which tests are more likely to fail. Some may be `canaries` that are more likely to fail if something is wrong: for example, a test that uses multiple features may fail if any of those features was just broken, while unit tests will only fail depending on the specific feature they care about. We would like to run the more sensitive, likely-to-fail tests first.
+
+A naive algorithm is to iterate and greedily pick the test which is most likely to fail at each point in time. That is, we start by picking
+\[ i_0 = \textbf{argmax}_{i} P(f(i)) \]
+where $f(i)$ indicates the $i$th test fails, and $P(f(i))$ is the probability of that event. We then continue to pick the next test based on which is most likely to fail, assuming all the previous have \emph{not} failed,
+\[ i_{k+1} = \textbf{argmax}_{i} P\Big(f(i) \; \Big| \; !f(i_0), \cdots , !f(i_k) \Big) \]
+
+This is not guaranteed to give us the optimal solution, however. Consider the following problem: assuming $x$ and $y$ are independent random variables, each failing with probability $0.5$. Assume that $z$ is a random variable that, if at least one of $x$ and $y$ fails, fails as well, and otherwise does not fail. $z$ has a $0.75$ probability of failure, so by the naive algorithm above we would pick it first, but then we must see the results of both $x$ and $y$ to know for certain of any test is going to fail. However, if we picked first $x$ and $y$, then after those two we already know if any test is going to fail. As a concrete example of a scenario where this can occur, $x$ and $y$ can be tests for addition and multiplication, respectively, and $z$ a test that utilizes both addition \emph{and} multiplication. This appears to be a common type of situation, and therefore the naive algorithm may be far from optimal on real-world codebases.
+
+%\bibliographystyle{abbrv}
+%\bibliography{main}
+
+\end{document}
+
