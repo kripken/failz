@@ -10,6 +10,8 @@
 
 \documentclass[12pt]{article}
 
+\usepackage{amsmath}
+
 \begin{document}
 \maketitle
 
@@ -29,18 +31,38 @@ where $f_i$ indicates the $i$th test fails, and $P(f_i)$ is the probability of t
 
 This is not guaranteed to give us the optimal solution, however. Consider the following problem: assuming $x$ and $y$ are independent random variables, each failing with probability $0.5$. Assume that $z$ is a random variable that, if at least one of $x$ and $y$ fails, fails as well, and otherwise does not fail. $z$ has a $0.75$ probability of failure, so by the naive algorithm above we would pick it first, but then we must see the results of both $x$ and $y$ to know for certain of any test is going to fail. However, if we picked first $x$ and $y$, then after those two we already know if any test is going to fail. As a concrete example of a scenario where this can occur, $x$ and $y$ can be tests for addition and multiplication, respectively, and $z$ a test that utilizes both addition \emph{and} multiplication. This appears to be a common type of situation, and therefore the naive algorithm may be far from optimal on real-world codebases.
 
-However, it depends how we define the loss function. To be more precise, let $t_i$ be the time it takes to run the test $i$. We want to minimize
-\[ E \; \textbf{time\_to\_first\_fail} = t_0 P(f_0) + t_1 P(f_1 | \neg f_0)  + \cdots + t_n P(f_n | \neg f_0 \cdots \neg f_{n-1})\]
+However, it depends how we define the loss function. To be more precise, let $t_i$ be the time it takes to run the test $i$. We want to minimize the mean time to first fail,
+\[ t_0 P(f_0) + \big(\sum_{i=0}^1 t_i\big) P(f_1 | \neg f_0)  + \cdots + \big(\sum_{i=0}^{n-1} t_n\big) P(f_n | \neg f_0 \cdots \neg f_{n-1})\]
+A reasonable approach is then to find the $s$ that minimizes the empirical loss, taken over a sample of test suite results. However, the number of permutations is obviously exponential in $n$.
 
-over all orderings of the test suite
+%\subsection{Return?}
 
-\section{Algorithm}
+%Returning to our naive algorithm from before, we now need to incorporate the timing information, and so cannot just pick the most likely test to fail -- we must also prefer tests that run quickly, perhaps something like minimizing
+%\[ t_o [1 - P(f_i)] \]
+
+\section{Hill Climbing}
+
+We can generate a large amount of random permutatons, and improve them by hill-climbing, by means of flipping two adjacent tests, so for example from $1,2,3,4,5$ to $2,1,3,4,5$. A flip alters the loss thus only on two elements of the sum (since, after them the conditional probability remains the same), so if we flip $k$ and $k+1$, generating a new permutation $\hat{s}$, the difference is:
+\begin{align}
+  &\sum_{i=0}^{i=k} t(\hat{s}(i)) \cdot P\Big(f(\hat{s}(k)) \; \Big| \; \neg f(\hat{s}(0)), \cdots, \neg f(\hat{s}(k-1)) \Big) &+ \\
+  &\sum_{i=0}^{i=k+1} t(\hat{s}(i)) \cdot P\Big(f(\hat{s}(k+1)) \; \Big| \; \neg f(\hat{s}(0)), \cdots, \neg f(\hat{s}(k)) \Big) &- \\
+  &\sum_{i=0}^{i=k} t(s(i)) \cdot P\Big(f(s(k)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k-1)) \Big) &- \\
+  &\sum_{i=0}^{i=k+1} t(s(i)) \cdot P\Big(f(s(k+1)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k)) \Big) = \\
+  &\Big[ t(s(i+1)) - t(s(i)) + \sum_{i=0}^{i=k} t(s(i)) \Big] \cdot P\Big(f(s(k+1)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k-1)) \Big) &+ \\
+  &\sum_{i=0}^{i=k+1} t(s(i)) \cdot P\Big(f(s(k)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k-1)), \neg f(s(k+1)) \Big) &- \\
+  &\sum_{i=0}^{i=k} t(s(i)) \cdot P\Big(f(s(k)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k-1)) \Big) &- \\
+  &\sum_{i=0}^{i=k+1} t(s(i)) \cdot P\Big(f(s(k+1)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k)) \Big)
+\end{align}
+
+\section{Algorithm X}
 
 Sample over all possible orderings, and correlate the time to first fail with the location of each test. An test whose low position is positively correlated with an early first fail is a promising test to put early up. After picking the first element in this way, we continue iteratively, under the assumption the first test did not fail (i.e. we drop random samples were it failed).
 
 \section{Fuzzing a Test Suite}
 
 Introduce random noise in the project, e.g. by replacing a number with a modified number (will still compile!), to get raw data.
+
+Perhaps interesting to see how many fuzz-inducted test failures are caught at compile time or via a runtime assert. Sign of a robust project. (Of course, we are not seeing breakage that is caught by neither tests, compile time or runtime asserts; this is mainly useful for a project with a large an effective test suite.)
 
 %\bibliographystyle{abbrv}
 %\bibliography{main}
