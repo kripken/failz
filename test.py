@@ -36,9 +36,25 @@ class Problem:
     for var in self.vars: var.sample()
     return [var.value for var in self.vars]
 
+# Analyzer
+
+class Analyzer:
+  def __init__(self, problem, n):
+    self.problem = problem
+    self.n = n
+    self.samples = [problem.sample() for i in range(n)]
+    #print self.samples
+
+  def analyze(self):
+    sums = [0]*len(self.samples[0])
+    for s in self.samples:
+      for i in range(len(sums)):
+        sums[i] += s[i]
+    means = map(lambda s: s/float(self.n), sums)
+    print means
+
 # Main
 
-p = Problem()
+a = Analyzer(Problem(), 10000)
+a.analyze()
 
-for i in range(50):
-  print p.sample()
