@@ -1,4 +1,4 @@
-import random
+import random, math
 
 # Vars
 
@@ -82,6 +82,7 @@ class Analyzer:
         #l += sample.index(1) + 1
         l += (sample.index(1) + 1)**2
     self.loss = l/float(len(self.samples))
+    #self.loss = math.sqrt(self.loss)
     return self.loss
 
 # Main
