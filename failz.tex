@@ -37,7 +37,7 @@ This seems like a reasonable approach, since at each point in time we pick the t
 \[ \frac{1}{2} + \delta + 2 \cdot \frac{1}{2} \cdot \Bigg( \frac{1}{3} - \epsilon \Bigg) + 3 \cdot \frac{1}{2} \cdot \Bigg( \frac{1}{3} - \epsilon \Bigg) \cdot \frac{1}{2}
 \; = \;
 \frac{13}{12} + \gamma(\epsilon, \delta)\]
-where the last expression $\gamma$ depends only on $\epsilon$ and $\delta$, and which we can take as close to $0$ as we want by reducing $\epsilon$, thus making the result larger than $1$ that we saw before.
+where the last expression $\gamma$ depends only on $\epsilon$ and $\delta$, and which we can take as close to $0$ as we want by reducing $\epsilon$, thus making the result larger than $1$ which as we saw before is the optimal result.
 
 The problem is that we too eagerly choose $z$ in this example: It is indeed more likely to fail, but offers no really useful information in the end. Motivated by this, we can consider the "opposite" algorithm, of picking the "apparently useless" indexes at the end, that is, we start with
 \[ s(n) = \textbf{argmin}_{i} P\Big(f(i) \; \Big| \; \forall j \neq i \;\; \neg f(j) \Big) \]
@@ -45,7 +45,9 @@ While this helps with the above example, it is not guaranteed to suceed either, 
 
 What can we do?
 
-\section{Hill Climbing}
+Binary ICA might find the underlying "core unit tests" that the others depend on. Still, this doesn't tell us which to put first.
+
+\section{Hill Climbing via Bubble-Sorting}
 
 We can generate a large amount of random permutatons, and improve them by hill-climbing, by means of flipping two adjacent tests, so for example from $1,2,3,4,5$ to $2,1,3,4,5$. A flip alters the loss thus only on two elements of the sum (since, after them the conditional probability remains the same), so if we flip $k$ and $k+1$, generating a new permutation $\hat{s}$, the difference is:
 \begin{align}
@@ -59,9 +61,13 @@ We can generate a large amount of random permutatons, and improve them by hill-c
   &\sum_{i=0}^{i=k+1} t(s(i)) \cdot P\Big(f(s(k+1)) \; \Big| \; \neg f(s(0)), \cdots, \neg f(s(k)) \Big)
 \end{align}
 
+Are there local minima under this approach?
+
 \section{Algorithm X}
 
 Sample over all possible orderings, and correlate the time to first fail with the location of each test. An test whose low position is positively correlated with an early first fail is a promising test to put early up. After picking the first element in this way, we continue iteratively, under the assumption the first test did not fail (i.e. we drop random samples were it failed).
+
+Later iterations can in fact use a distribution that slowly hardens, based on what we already know is likely good. E.g. fix the first, then recurse on the rest, etc. But does not need to be the first?
 
 \section{Fuzzing a Test Suite}
 
@@ -69,9 +75,6 @@ Introduce random noise in the project, e.g. by replacing a number with a modifie
 
 Perhaps interesting to see how many fuzz-inducted test failures are caught at compile time or via a runtime assert. Sign of a robust project. (Of course, we are not seeing breakage that is caught by neither tests, compile time or runtime asserts; this is mainly useful for a project with a large an effective test suite.)
 
-\section{Questions}
-
-Is the loss convex?
 
 %\bibliographystyle{abbrv}
 %\bibliography{main}
